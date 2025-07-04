@@ -1,200 +1,121 @@
-    rules_version = '2';
-    service cloud.firestore {
-    match /databases/{database}/documents {
-        
-        // Regras para usuários
-        match /users/{userId} {
-        // Permitir leitura e escrita apenas para o próprio usuário
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-        
-        // Permitir criação de perfil durante registro
-        allow create: if request.auth != null 
-            && request.auth.uid == userId
-            && request.resource.data.keys().hasAll(['email', 'createdAt'])
-            && request.resource.data.email == request.auth.token.email;
-        }
-        
-        // Regras para tarefas
-        match /tasks/{taskId} {
-        // Permitir acesso apenas ao usuário que criou a tarefa
-        allow read, write: if request.auth != null 
-            && request.auth.uid == resource.data.userId;
-        
-        // Permitir criação de nova tarefa
-        allow create: if request.auth != null 
-            && request.auth.uid == request.resource.data.userId
-            && request.resource.data.keys().hasAll(['title', 'userId', 'createdAt'])
-            && request.resource.data.title is string
-            && request.resource.data.title.size() > 0;
-        
-        // Validações adicionais para atualizações
-        allow update: if request.auth != null 
-            && request.auth.uid == resource.data.userId
-            && request.resource.data.userId == resource.data.userId; // Não permite mudança de dono
-        }
-        
-        // Regras para transações financeiras
-        match /transactions/{transactionId} {
-        // Permitir acesso apenas ao usuário que criou a transação
-        allow read, write: if request.auth != null 
-            && request.auth.uid == resource.data.userId;
-        
-        // Permitir criação de nova transação
-        allow create: if request.auth != null 
-            && request.auth.uid == request.resource.data.userId
-            && request.resource.data.keys().hasAll(['description', 'amount', 'type', 'userId', 'date'])
-            && request.resource.data.description is string
-            && request.resource.data.description.size() > 0
-            && request.resource.data.amount is number
-            && request.resource.data.amount > 0
-            && request.resource.data.type in ['income', 'expense'];
-        
-        // Validações para atualizações
-        allow update: if request.auth != null 
-            && request.auth.uid == resource.data.userId
-            && request.resource.data.userId == resource.data.userId
-            && request.resource.data.amount > 0;
-        }
-        
-        // Regras para metas e objetivos
-        match /goals/{goalId} {
-        allow read, write: if request.auth != null 
-            && request.auth.uid == resource.data.userId;
-        
-        allow create: if request.auth != null 
-            && request.auth.uid == request.resource.data.userId
-            && request.resource.data.keys().hasAll(['title', 'targetValue', 'userId', 'createdAt'])
-            && request.resource.data.title is string
-            && request.resource.data.targetValue is number;
-        }
-        
-        // Regras para categorias personalizadas
-        match /categories/{categoryId} {
-        allow read, write: if request.auth != null 
-            && request.auth.uid == resource.data.userId;
-        
-        allow create: if request.auth != null 
-            && request.auth.uid == request.resource.data.userId
-            && request.resource.data.keys().hasAll(['name', 'type', 'userId'])
-            && request.resource.data.name is string
-            && request.resource.data.type in ['task', 'finance'];
-        }
-        
-        // Regras para configurações do usuário
-        match /settings/{userId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-        
-        // Permitir criação de configurações padrão
-        allow create: if request.auth != null 
-            && request.auth.uid == userId
-            && request.resource.data.keys().hasAll(['theme', 'notifications', 'language']);
-        }
-        
-        // Regras para dados de backup
-        match /backups/{userId}/{backupId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-        
-        // Limitar tamanho do backup
-        allow create: if request.auth != null 
-            && request.auth.uid == userId
-            && request.resource.data.size() < 5000000; // 5MB max
-        }
-        
-        // Regras para relatórios compartilhados (opcional)
-        match /shared_reports/{reportId} {
-        // Permitir leitura apenas se o usuário for o criador ou se o relatório for público
-        allow read: if request.auth != null 
-            && (request.auth.uid == resource.data.userId 
-                || resource.data.isPublic == true);
-        
-        // Permitir escrita apenas para o criador
-        allow write: if request.auth != null 
-            && request.auth.uid == resource.data.userId;
-        }
-        
-        // Regras para logs de atividade (opcional)
-        match /activity_logs/{userId}/{logId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        
-        // Logs são apenas para leitura, criados por cloud functions
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
-        }
-        
-        // Função auxiliar para validar dados
-        function isValidUser() {
-        return request.auth != null && request.auth.uid != null;
-        }
-        
-        function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-        }
-        
-        function isValidString(field, minLength, maxLength) {
-        return field is string 
-            && field.size() >= minLength 
-            && field.size() <= maxLength;
-        }
-        
-        function isValidNumber(field, min, max) {
-        return field is number 
-            && field >= min 
-            && field <= max;
-        }
-        
-        // Regras para coleções administrativas (se necessário)
-        match /admin/{document=**} {
-        allow read, write: if false; // Apenas admins via cloud functions
-        }
-        
-        // Regras para estatísticas globais (se necessário)
-        match /statistics/{document=**} {
-        allow read: if request.auth != null;
-        allow write: if false; // Apenas cloud functions
-        }
-        
-        // Regras padrão - negar acesso a tudo que não foi especificado
-        match /{document=**} {
-        allow read, write: if false;
-        }
+// firestore.rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Regras para perfis de usuários
+    match /users/{userId} {
+      // Usuário só pode ler/escrever seus próprios dados
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Permitir criação de perfil durante registro
+      allow create: if request.auth != null 
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasAll(['email', 'createdAt'])
+        && request.resource.data.email == request.auth.token.email;
     }
+    
+    // Regras para tarefas
+    match /tasks/{taskId} {
+      // Só o dono da tarefa pode acessar
+      allow read, write: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      
+      // Permitir criação de nova tarefa
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId
+        && request.resource.data.keys().hasAll(['title', 'userId', 'createdAt'])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 200;
+      
+      // Validações para atualizações
+      allow update: if request.auth != null 
+        && request.auth.uid == resource.data.userId
+        && request.resource.data.userId == resource.data.userId; // Não permite mudança de dono
     }
-
-    // Regras de segurança para Storage (arquivo separado storage.rules)
-    /*
-    rules_version = '2';
-    service firebase.storage {
-    match /b/{bucket}/o {
-        // Regras para avatares de usuários
-        match /avatars/{userId}/{fileName} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-        allow create: if request.auth != null 
-            && request.auth.uid == userId
-            && request.resource.size < 5 * 1024 * 1024 // 5MB max
-            && request.resource.contentType.matches('image/.*');
-        }
-        
-        // Regras para anexos de tarefas
-        match /task_attachments/{userId}/{taskId}/{fileName} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-        allow create: if request.auth != null 
-            && request.auth.uid == userId
-            && request.resource.size < 10 * 1024 * 1024; // 10MB max
-        }
-        
-        // Regras para backups
-        match /backups/{userId}/{fileName} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-        allow create: if request.auth != null 
-            && request.auth.uid == userId
-            && request.resource.size < 50 * 1024 * 1024; // 50MB max
-        }
-        
-        // Negar acesso a tudo que não foi especificado
-        match /{allPaths=**} {
-        allow read, write: if false;
-        }
+    
+    // Regras para transações financeiras
+    match /transactions/{transactionId} {
+      // Só o dono da transação pode acessar
+      allow read, write: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      
+      // Permitir criação de nova transação
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId
+        && request.resource.data.keys().hasAll(['description', 'amount', 'type', 'userId', 'date'])
+        && request.resource.data.description is string
+        && request.resource.data.description.size() > 0
+        && request.resource.data.description.size() <= 200
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0
+        && request.resource.data.type in ['income', 'expense'];
+      
+      // Validações para atualizações
+      allow update: if request.auth != null 
+        && request.auth.uid == resource.data.userId
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.amount > 0;
     }
+    
+    // Regras para metas financeiras
+    match /goals/{goalId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId
+        && request.resource.data.keys().hasAll(['title', 'targetValue', 'userId', 'createdAt'])
+        && request.resource.data.title is string
+        && request.resource.data.targetValue is number
+        && request.resource.data.targetValue > 0;
     }
-    */
+    
+    // Regras para categorias personalizadas
+    match /categories/{categoryId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId
+        && request.resource.data.keys().hasAll(['name', 'type', 'userId'])
+        && request.resource.data.name is string
+        && request.resource.data.type in ['task', 'finance'];
+    }
+    
+    // Regras para configurações do usuário
+    match /settings/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      allow create: if request.auth != null 
+        && request.auth.uid == userId;
+    }
+    
+    // Função auxiliar para validar dados
+    function isValidUser() {
+      return request.auth != null && request.auth.uid != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    function isValidString(field, minLength, maxLength) {
+      return field is string 
+        && field.size() >= minLength 
+        && field.size() <= maxLength;
+    }
+    
+    function isValidNumber(field, min, max) {
+      return field is number 
+        && field >= min 
+        && field <= max;
+    }
+    
+    // Negar acesso a tudo que não foi especificado
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
