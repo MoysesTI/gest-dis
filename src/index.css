@@ -1,0 +1,584 @@
+/* Importar fontes */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Importar Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Configurações globais */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  background-color: #f9fafb;
+  color: #1f2937;
+  overflow-x: hidden;
+}
+
+/* Configurações para modo escuro */
+@media (prefers-color-scheme: dark) {
+  html.dark {
+    color-scheme: dark;
+  }
+  
+  html.dark body {
+    background-color: #111827;
+    color: #f9fafb;
+  }
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Modo escuro scrollbar */
+html.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Estilos para componentes */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Animações personalizadas */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -30px, 0);
+  }
+  70% {
+    transform: translate3d(0, -15px, 0);
+  }
+  90% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+/* Classes utilitárias */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+.bounce {
+  animation: bounce 1s infinite;
+}
+
+/* Estilos para formulários */
+.form-group {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.form-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors;
+}
+
+.form-input:focus {
+  @apply outline-none ring-2 ring-blue-500 border-transparent;
+}
+
+.form-error {
+  @apply text-red-600 text-sm mt-1;
+}
+
+/* Estilos para botões */
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+}
+
+.btn-secondary {
+  @apply bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+}
+
+.btn-warning {
+  @apply bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500;
+}
+
+.btn-ghost {
+  @apply bg-transparent text-gray-600 hover:bg-gray-100 focus:ring-gray-500;
+}
+
+.btn-sm {
+  @apply px-3 py-1.5 text-sm;
+}
+
+.btn-lg {
+  @apply px-6 py-3 text-lg;
+}
+
+/* Estilos para cards */
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+}
+
+.card-header {
+  @apply border-b border-gray-200 pb-4 mb-4;
+}
+
+.card-title {
+  @apply text-lg font-semibold text-gray-900;
+}
+
+.card-subtitle {
+  @apply text-sm text-gray-600 mt-1;
+}
+
+.card-body {
+  @apply space-y-4;
+}
+
+.card-footer {
+  @apply border-t border-gray-200 pt-4 mt-4;
+}
+
+/* Estilos para modo escuro */
+html.dark .card {
+  @apply bg-gray-800 border-gray-700;
+}
+
+html.dark .card-header {
+  @apply border-gray-700;
+}
+
+html.dark .card-title {
+  @apply text-gray-100;
+}
+
+html.dark .card-subtitle {
+  @apply text-gray-400;
+}
+
+html.dark .card-footer {
+  @apply border-gray-700;
+}
+
+html.dark .form-label {
+  @apply text-gray-300;
+}
+
+html.dark .form-input {
+  @apply bg-gray-700 border-gray-600 text-gray-100;
+}
+
+html.dark .form-input:focus {
+  @apply border-blue-500 ring-blue-500;
+}
+
+html.dark .btn-secondary {
+  @apply bg-gray-700 text-gray-100 hover:bg-gray-600;
+}
+
+html.dark .btn-ghost {
+  @apply text-gray-300 hover:bg-gray-700;
+}
+
+/* Estilos para tabelas */
+.table {
+  @apply w-full border-collapse;
+}
+
+.table th {
+  @apply bg-gray-50 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+
+.table td {
+  @apply px-4 py-4 whitespace-nowrap text-sm text-gray-900;
+}
+
+.table tbody tr:nth-child(even) {
+  @apply bg-gray-50;
+}
+
+html.dark .table th {
+  @apply bg-gray-800 text-gray-300;
+}
+
+html.dark .table td {
+  @apply text-gray-100;
+}
+
+html.dark .table tbody tr:nth-child(even) {
+  @apply bg-gray-800;
+}
+
+/* Estilos para alertas */
+.alert {
+  @apply p-4 rounded-lg border-l-4;
+}
+
+.alert-success {
+  @apply bg-green-50 border-green-400 text-green-700;
+}
+
+.alert-error {
+  @apply bg-red-50 border-red-400 text-red-700;
+}
+
+.alert-warning {
+  @apply bg-yellow-50 border-yellow-400 text-yellow-700;
+}
+
+.alert-info {
+  @apply bg-blue-50 border-blue-400 text-blue-700;
+}
+
+/* Estilos para badges */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-primary {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.badge-secondary {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.badge-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.badge-danger {
+  @apply bg-red-100 text-red-800;
+}
+
+.badge-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+/* Estilos para tooltips */
+.tooltip {
+  @apply absolute z-10 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 transition-opacity duration-300;
+}
+
+.tooltip.show {
+  @apply opacity-100;
+}
+
+.tooltip-arrow {
+  @apply absolute w-2 h-2 bg-gray-900 transform rotate-45;
+}
+
+/* Estilos para modais */
+.modal-overlay {
+  @apply fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50;
+}
+
+.modal-container {
+  @apply relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white;
+}
+
+html.dark .modal-container {
+  @apply bg-gray-800 border-gray-700;
+}
+
+/* Estilos para loading */
+.loading-spinner {
+  @apply inline-block w-4 h-4 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin;
+}
+
+.loading-pulse {
+  @apply animate-pulse bg-gray-300 rounded;
+}
+
+html.dark .loading-pulse {
+  @apply bg-gray-700;
+}
+
+/* Estilos para progress bars */
+.progress-bar {
+  @apply w-full bg-gray-200 rounded-full h-2;
+}
+
+.progress-fill {
+  @apply bg-blue-600 h-2 rounded-full transition-all duration-300;
+}
+
+html.dark .progress-bar {
+  @apply bg-gray-700;
+}
+
+/* Estilos para drag and drop */
+.drag-over {
+  @apply border-2 border-dashed border-blue-400 bg-blue-50;
+}
+
+html.dark .drag-over {
+  @apply border-blue-500 bg-blue-900 bg-opacity-20;
+}
+
+/* Estilos para código */
+pre {
+  @apply bg-gray-100 rounded-lg p-4 overflow-x-auto;
+}
+
+code {
+  @apply bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm font-mono;
+}
+
+html.dark pre {
+  @apply bg-gray-800;
+}
+
+html.dark code {
+  @apply bg-gray-800 text-gray-200;
+}
+
+/* Estilos para impressão */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    color: black;
+    background: white;
+  }
+  
+  .card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}
+
+/* Estilos para acessibilidade */
+.sr-only {
+  @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+}
+
+.focus-visible:focus {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Estilos para dispositivos móveis */
+@media (max-width: 640px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+  
+  .card {
+    @apply p-4;
+  }
+  
+  .btn {
+    @apply w-full justify-center;
+  }
+  
+  .table {
+    @apply text-sm;
+  }
+}
+
+/* Estilos para High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .high-dpi {
+    /* Estilos específicos para displays de alta resolução */
+  }
+}
+
+/* Estilos para redução de movimento */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Estilos para modo de alto contraste */
+@media (prefers-contrast: high) {
+  .card {
+    @apply border-2 border-gray-900;
+  }
+  
+  .btn-primary {
+    @apply bg-blue-800;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-800 text-white;
+  }
+}
+
+/* Estilos customizados específicos da aplicação */
+.productivity-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.finance-gradient {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.success-gradient {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.chart-container {
+  @apply w-full h-64 md:h-80 lg:h-96;
+}
+
+.task-priority-high {
+  @apply border-l-4 border-red-500;
+}
+
+.task-priority-medium {
+  @apply border-l-4 border-yellow-500;
+}
+
+.task-priority-low {
+  @apply border-l-4 border-green-500;
+}
+
+.financial-income {
+  @apply text-green-600 font-semibold;
+}
+
+.financial-expense {
+  @apply text-red-600 font-semibold;
+}
+
+.stats-card {
+  @apply bg-gradient-to-r from-white to-gray-50 border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow;
+}
+
+html.dark .stats-card {
+  @apply from-gray-800 to-gray-900 border-gray-700;
+}
+
+/* Estilos para animações de entrada */
+.enter-from-right {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.enter-to-right {
+  transform: translateX(0);
+  opacity: 1;
+  transition: all 0.3s ease-out;
+}
+
+.enter-from-bottom {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.enter-to-bottom {
+  transform: translateY(0);
+  opacity: 1;
+  transition: all 0.3s ease-out;
+}
+
+/* Estilos para glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
