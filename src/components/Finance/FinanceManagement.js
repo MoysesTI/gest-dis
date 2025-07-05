@@ -19,7 +19,7 @@ import {
   Briefcase,
   MoreHorizontal
 } from 'lucide-react';
-import { useFinance } from '../hooks/useFinance';
+import { useFinance } from '../../hooks/useFinance';
 import toast from 'react-hot-toast';
 
 // Mapeamento de ícones para categorias

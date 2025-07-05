@@ -1,61 +1,97 @@
 {
-    "name": "sistema-gestao-produtividade",
-    "version": "1.0.0",
-    "description": "Sistema completo de gestão de tarefas e finanças pessoais",
-    "main": "src/index.js",
-    "scripts": {
-        "start": "react-scripts start",
-        "build": "react-scripts build",
-        "test": "react-scripts test",
-        "eject": "react-scripts eject",
-        "predeploy": "npm run build",
-        "deploy": "gh-pages -d build"
-    },
-    "dependencies": {
-        "autoprefixer": "^10.4.16",
-        "date-fns": "^2.29.3",
-        "firebase": "^10.14.1",
-        "framer-motion": "^10.16.4",
-        "lucide-react": "^0.263.1",
-        "postcss": "^8.4.32",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
-        "react-hot-toast": "^2.5.2",
-        "react-router-dom": "^6.8.0",
-        "react-scripts": "5.0.1",
-        "recharts": "^2.8.0",
-        "tailwindcss": "^3.3.6"
-    },
-    "devDependencies": {
-        "@tailwindcss/forms": "^0.5.7",
-        "@tailwindcss/typography": "^0.5.10",
-        "gh-pages": "^6.1.0"
-    },
-    "browserslist": {
-        "production": [
-            ">0.2%",
-            "not dead",
-            "not op_mini all"
-        ],
-        "development": [
-            "last 1 chrome version",
-            "last 1 firefox version",
-            "last 1 safari version"
-        ]
-    },
-    "homepage": ".",
-    "keywords": [
-        "react",
-        "firebase",
-        "produtividade",
-        "finanças",
-        "gestão",
-        "tarefas"
+  "name": "sistema-gestao-produtividade",
+  "version": "1.0.0",
+  "description": "Sistema completo de gestão de tarefas e finanças pessoais",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
+    "verify": "node scripts/verify-setup.js",
+    "firebase:deploy": "firebase deploy",
+    "firebase:rules": "firebase deploy --only firestore:rules",
+    "firebase:indexes": "firebase deploy --only firestore:indexes",
+    "firebase:hosting": "firebase deploy --only hosting",
+    "dev": "npm run verify && npm start",
+    "setup": "npm install && npm run verify",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "analyze": "npm run build && npx source-map-explorer 'build/static/js/*.js'",
+    "clean": "rm -rf build node_modules && npm install"
+  },
+  "dependencies": {
+    "autoprefixer": "^10.4.16",
+    "date-fns": "^2.29.3",
+    "firebase": "^10.14.1",
+    "firebase-tools": "^14.9.0",
+    "framer-motion": "^10.16.4",
+    "lucide-react": "^0.263.1",
+    "postcss": "^8.4.32",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.5.2",
+    "react-router-dom": "^6.8.0",
+    "react-scripts": "5.0.1",
+    "recharts": "^2.8.0",
+    "tailwindcss": "^3.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.10",
+    "eslint": "^8.0.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "gh-pages": "^6.1.0",
+    "source-map-explorer": "^2.5.3"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
     ],
-    "author": "Seu Nome",
-    "license": "MIT",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/seuusuario/sistema-gestao-produtividade.git"
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "homepage": ".",
+  "keywords": [
+    "react",
+    "firebase",
+    "produtividade",
+    "finanças",
+    "gestão",
+    "tarefas",
+    "pwa",
+    "typescript"
+  ],
+  "author": "Sistema de Gestão",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seuusuario/sistema-gestao-produtividade.git"
+  },
+  "bugs": {
+    "url": "https://github.com/seuusuario/sistema-gestao-produtividade/issues"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ],
+    "rules": {
+      "no-unused-vars": "warn",
+      "no-console": "off",
+      "react-hooks/exhaustive-deps": "warn"
     }
+  }
 }

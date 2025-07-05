@@ -16,8 +16,8 @@ import {
   AlertTriangle,
   PieChart
 } from 'lucide-react';
-import { useTasks } from '../hooks/useTasks';
-import { useFinance } from '../hooks/useFinance';
+import { useTasks } from '../../hooks/useTasks';
+import { useFinance } from '../../hooks/useFinance';
 
 // Componente de Cartão de Métrica
 const MetricCard = ({ title, value, change, icon: Icon, color, prefix = '', suffix = '' }) => (

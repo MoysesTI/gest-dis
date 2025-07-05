@@ -18,7 +18,7 @@ import {
   Heart,
   DollarSign
 } from 'lucide-react';
-import { useTasks } from '../hooks/useTasks';
+import { useTasks } from '../../hooks/useTasks';
 import toast from 'react-hot-toast';
 
 // Mapeamento de ícones para categorias

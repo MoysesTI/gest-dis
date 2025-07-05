@@ -51,6 +51,11 @@ import { useAuth } from './contexts/AuthContext';
 import { useTasks } from './hooks/useTasks';
 import { useFinance } from './hooks/useFinance';
 
+// IMPORTAR OS COMPONENTES REAIS - CORREÇÃO PRINCIPAL
+import TaskManagement from './components/Tasks/TaskManagement';
+import FinanceManagement from './components/Finance/FinanceManagement';
+import Reports from './components/Dashboard/Reports';
+
 // Context da aplicação
 const AppContext = createContext();
 
@@ -493,46 +498,6 @@ const Dashboard = ({ user }) => {
   );
 };
 
-// Placeholder para outros componentes que serão implementados
-const TaskManagementPlaceholder = () => (
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 className="text-3xl font-bold text-gray-900 mb-4">Gestão de Tarefas</h1>
-    <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-      <CheckSquare className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-      <h2 className="text-xl font-semibold text-gray-700 mb-2">Componente em Desenvolvimento</h2>
-      <p className="text-gray-600">
-        Este componente será implementado com dados reais do Firebase.
-      </p>
-    </div>
-  </div>
-);
-
-const FinanceManagementPlaceholder = () => (
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 className="text-3xl font-bold text-gray-900 mb-4">Gestão Financeira</h1>
-    <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-      <Wallet className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-      <h2 className="text-xl font-semibold text-gray-700 mb-2">Componente em Desenvolvimento</h2>
-      <p className="text-gray-600">
-        Este componente será implementado com dados reais do Firebase.
-      </p>
-    </div>
-  </div>
-);
-
-const ReportsPlaceholder = () => (
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 className="text-3xl font-bold text-gray-900 mb-4">Relatórios</h1>
-    <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-      <BarChart3 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-      <h2 className="text-xl font-semibold text-gray-700 mb-2">Componente em Desenvolvimento</h2>
-      <p className="text-gray-600">
-        Este componente será implementado com dados reais do Firebase.
-      </p>
-    </div>
-  </div>
-);
-
 // Componente principal do App
 const App = () => {
   const { user, loading: authLoading, login, register, logout } = useAuth();
@@ -573,17 +538,17 @@ const App = () => {
     }
   };
 
-  // Renderizar componente baseado na página atual
+  // CORREÇÃO PRINCIPAL: Renderizar componentes REAIS ao invés dos placeholders
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'dashboard':
         return <Dashboard user={user} />;
       case 'tasks':
-        return <TaskManagementPlaceholder />;
+        return <TaskManagement />; // ✅ COMPONENTE REAL
       case 'finance':
-        return <FinanceManagementPlaceholder />;
+        return <FinanceManagement />; // ✅ COMPONENTE REAL
       case 'reports':
-        return <ReportsPlaceholder />;
+        return <Reports />; // ✅ COMPONENTE REAL
       default:
         return <Dashboard user={user} />;
     }
