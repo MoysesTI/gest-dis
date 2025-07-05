@@ -1,9 +1,9 @@
-// firestore.rules - Versão Melhorada
+// firestore.rules - VERSÃO TEMPORÁRIA SIMPLIFICADA
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Funções auxiliares para validação
+    // Função auxiliar simples
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -12,206 +12,68 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
     
-    function isValidString(field, minLength, maxLength) {
-      return field is string 
-        && field.size() >= minLength 
-        && field.size() <= maxLength;
-    }
+    // REGRAS SIMPLIFICADAS PARA DEBUGGING
     
-    function isValidNumber(field, min, max) {
-      return field is number 
-        && field >= min 
-        && field <= max;
-    }
-    
-    function isValidEmail(email) {
-      return email is string && email.matches('.*@.*');
-    }
-    
-    function hasRequiredFields(fields) {
-      return request.resource.data.keys().hasAll(fields);
-    }
-    
-    // Regras para perfis de usuários
+    // Usuários - acesso total ao próprio documento
     match /users/{userId} {
-      // Leitura: usuário só pode ler seus próprios dados
-      allow read: if isOwner(userId);
-      
-      // Escrita: usuário só pode escrever seus próprios dados
-      allow write: if isOwner(userId)
-        && isValidString(request.resource.data.email, 5, 100)
-        && isValidEmail(request.resource.data.email);
-      
-      // Criação: permitir durante registro com validações rigorosas
-      allow create: if isAuthenticated()
-        && isOwner(userId)
-        && hasRequiredFields(['email', 'createdAt'])
-        && request.resource.data.email == request.auth.token.email
-        && isValidEmail(request.resource.data.email)
-        && request.resource.data.createdAt is timestamp;
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId);
     }
     
-    // Regras para tarefas
+    // Tarefas - REGRAS SIMPLIFICADAS
     match /tasks/{taskId} {
-      // Leitura: apenas o dono pode ler
-      allow read: if isAuthenticated() 
-        && isOwner(resource.data.userId);
+      // Leitura: apenas o dono
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
       
-      // Criação: validações rigorosas
+      // Criação: validação mínima
       allow create: if isAuthenticated()
-        && isOwner(request.resource.data.userId)
-        && hasRequiredFields(['title', 'userId', 'createdAt', 'completed'])
-        && isValidString(request.resource.data.title, 1, 200)
-        && request.resource.data.completed is bool
-        && request.resource.data.createdAt is timestamp
         && request.resource.data.userId == request.auth.uid
-        // Validar categoria se existir
-        && (!('category' in request.resource.data) || 
-            request.resource.data.category in ['work', 'study', 'personal', 'home', 'health', 'finance'])
-        // Validar prioridade se existir
-        && (!('priority' in request.resource.data) || 
-            request.resource.data.priority in ['low', 'medium', 'high'])
-        // Validar descrição se existir
-        && (!('description' in request.resource.data) || 
-            isValidString(request.resource.data.description, 0, 1000))
-        // Validar tempo estimado se existir
-        && (!('timeEstimate' in request.resource.data) || 
-            isValidNumber(request.resource.data.timeEstimate, 1, 1440));
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0;
       
-      // Atualização: usuário pode atualizar suas próprias tarefas
-      allow update: if isAuthenticated()
-        && isOwner(resource.data.userId)
-        && request.resource.data.userId == resource.data.userId // Não permite mudança de dono
-        && request.resource.data.userId == request.auth.uid
-        // Validar título se alterado
-        && (!('title' in request.resource.data) || 
-            isValidString(request.resource.data.title, 1, 200))
-        // Validar categoria se alterada
-        && (!('category' in request.resource.data) || 
-            request.resource.data.category in ['work', 'study', 'personal', 'home', 'health', 'finance'])
-        // Validar prioridade se alterada
-        && (!('priority' in request.resource.data) || 
-            request.resource.data.priority in ['low', 'medium', 'high']);
+      // Atualização: apenas o dono
+      allow update: if isAuthenticated() 
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
       
-      // Exclusão: apenas o dono pode deletar
-      allow delete: if isAuthenticated()
-        && isOwner(resource.data.userId);
+      // Exclusão: apenas o dono
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
     
-    // Regras para transações financeiras
+    // Transações financeiras - REGRAS SIMPLIFICADAS
     match /transactions/{transactionId} {
-      // Leitura: apenas o dono pode ler
-      allow read: if isAuthenticated() 
-        && isOwner(resource.data.userId);
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
       
-      // Criação: validações rigorosas
       allow create: if isAuthenticated()
-        && isOwner(request.resource.data.userId)
-        && hasRequiredFields(['description', 'amount', 'type', 'userId', 'date', 'category', 'createdAt'])
-        && isValidString(request.resource.data.description, 1, 200)
-        && isValidNumber(request.resource.data.amount, 0.01, 999999.99)
-        && request.resource.data.type in ['income', 'expense']
-        && request.resource.data.date is string
-        && request.resource.data.createdAt is timestamp
         && request.resource.data.userId == request.auth.uid
-        // Validar categorias baseadas no tipo
-        && ((request.resource.data.type == 'income' && 
-             request.resource.data.category in ['salary', 'transport', 'overtime', 'freelance', 'investment', 'other']) ||
-            (request.resource.data.type == 'expense' && 
-             request.resource.data.category in ['family', 'utilities', 'internet', 'account', 'materials', 'food', 'clothing', 'entertainment', 'transport', 'health', 'education', 'investment', 'other']));
-      
-      // Atualização: validações similares à criação
-      allow update: if isAuthenticated()
-        && isOwner(resource.data.userId)
-        && request.resource.data.userId == resource.data.userId
-        && request.resource.data.userId == request.auth.uid
-        && isValidNumber(request.resource.data.amount, 0.01, 999999.99)
+        && request.resource.data.description is string
+        && request.resource.data.amount is number
         && request.resource.data.type in ['income', 'expense'];
       
-      // Exclusão: apenas o dono pode deletar
-      allow delete: if isAuthenticated()
-        && isOwner(resource.data.userId);
-    }
-    
-    // Regras para metas financeiras
-    match /goals/{goalId} {
-      // CRUD: apenas para o dono
-      allow read, write: if isAuthenticated() 
-        && isOwner(resource.data.userId);
-      
-      allow create: if isAuthenticated()
-        && isOwner(request.resource.data.userId)
-        && hasRequiredFields(['title', 'targetValue', 'userId', 'createdAt'])
-        && isValidString(request.resource.data.title, 1, 100)
-        && isValidNumber(request.resource.data.targetValue, 0.01, 999999999)
-        && request.resource.data.createdAt is timestamp
-        && request.resource.data.userId == request.auth.uid;
-    }
-    
-    // Regras para categorias personalizadas
-    match /categories/{categoryId} {
-      allow read, write: if isAuthenticated() 
-        && isOwner(resource.data.userId);
-      
-      allow create: if isAuthenticated()
-        && isOwner(request.resource.data.userId)
-        && hasRequiredFields(['name', 'type', 'userId'])
-        && isValidString(request.resource.data.name, 1, 50)
-        && request.resource.data.type in ['task', 'finance']
-        && request.resource.data.userId == request.auth.uid;
-    }
-    
-    // Regras para configurações do usuário
-    match /settings/{userId} {
-      // CRUD: apenas o próprio usuário
-      allow read, write: if isAuthenticated() && isOwner(userId);
-      
-      allow create: if isAuthenticated() 
-        && isOwner(userId)
-        && request.resource.data.userId == request.auth.uid;
-    }
-    
-    // Regras para dados de backup (se implementado)
-    match /backups/{userId} {
-      allow read, write: if isAuthenticated() && isOwner(userId);
-      
-      allow create: if isAuthenticated()
-        && isOwner(userId)
-        && hasRequiredFields(['data', 'createdAt', 'userId'])
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.createdAt is timestamp;
-    }
-    
-    // Regras para logs de auditoria (read-only para usuário)
-    match /audit_logs/{logId} {
-      allow read: if isAuthenticated() 
-        && resource.data.userId == request.auth.uid;
-      // Criação apenas via Cloud Functions
-      allow create: if false;
-      allow update, delete: if false;
-    }
-    
-    // Regras para notificações do usuário
-    match /notifications/{notificationId} {
-      allow read: if isAuthenticated() 
-        && resource.data.userId == request.auth.uid;
-      
-      allow update: if isAuthenticated()
+      allow update: if isAuthenticated() 
         && resource.data.userId == request.auth.uid
-        // Permitir apenas marcar como lida
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']);
+        && request.resource.data.userId == request.auth.uid;
       
-      allow delete: if isAuthenticated()
-        && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
     
-    // Regras para estatísticas globais (read-only)
-    match /statistics/{doc} {
-      allow read: if isAuthenticated();
-      allow write: if false; // Apenas Cloud Functions podem escrever
+    // Outras coleções - acesso completo ao próprio usuário
+    match /goals/{goalId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
     }
     
-    // Negar acesso a qualquer coisa não especificada
+    match /categories/{categoryId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+    
+    match /settings/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Negar acesso a tudo que não foi especificado
     match /{document=**} {
       allow read, write: if false;
     }

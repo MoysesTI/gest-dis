@@ -14,7 +14,8 @@ import {
   Award,
   Info,
   AlertTriangle,
-  PieChart
+  PieChart,
+  Plus
 } from 'lucide-react';
 import { useTasks } from '../../hooks/useTasks';
 import { useFinance } from '../../hooks/useFinance';
