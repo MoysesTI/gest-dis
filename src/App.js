@@ -43,17 +43,21 @@ import {
   ArrowDownRight,
   Save,
   FileText,
-  Download
+  Download,
+  ChefHat,
+  Utensils
 } from 'lucide-react';
 
 // Importar contextos e hooks
 import { useAuth } from './contexts/AuthContext';
 import { useTasks } from './hooks/useTasks';
 import { useFinance } from './hooks/useFinance';
+import { useDiet } from './hooks/useDiet'; // ✅ ADICIONAR HOOK DE DIETAS
 
-// IMPORTAR OS COMPONENTES REAIS - CORREÇÃO PRINCIPAL
+// IMPORTAR TODOS OS COMPONENTES PRINCIPAIS
 import TaskManagement from './components/Tasks/TaskManagement';
 import FinanceManagement from './components/Finance/FinanceManagement';
+import DietManagement from './components/Diet/DietManagement'; // ✅ ADICIONAR COMPONENTE DE DIETAS
 import Reports from './components/Dashboard/Reports';
 
 // Context da aplicação
@@ -109,7 +113,7 @@ const LoginForm = ({ onLogin, onRegister, isLoading }) => {
             Sistema de Gestão
           </h1>
           <p className="text-gray-600">
-            Produtividade e Finanças Pessoais
+            Produtividade, Finanças e Nutrição
           </p>
         </div>
 
@@ -166,13 +170,15 @@ const LoginForm = ({ onLogin, onRegister, isLoading }) => {
   );
 };
 
-// Componente de Navegação
+// Componente de Navegação - ATUALIZADO COM DIETAS
 const Navigation = ({ currentPage, onPageChange, user, onLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // ✅ ADICIONAR DIETAS NO MENU
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'tasks', label: 'Tarefas', icon: CheckSquare },
+    { id: 'diet', label: 'Dietas', icon: ChefHat }, // ✅ NOVO ITEM DE MENU
     { id: 'finance', label: 'Finanças', icon: Wallet },
     { id: 'reports', label: 'Relatórios', icon: BarChart3 },
   ];
@@ -271,14 +277,16 @@ const Navigation = ({ currentPage, onPageChange, user, onLogout }) => {
   );
 };
 
-// Dashboard com dados reais
+// Dashboard com dados reais - ATUALIZADO COM DIETAS
 const Dashboard = ({ user }) => {
   const { getTaskStats } = useTasks();
   const { getFinancialStats, userFinancialConfig } = useFinance();
+  const { getDietStats, currentDiet } = useDiet(); // ✅ ADICIONAR HOOK DE DIETAS
   
   // Obter estatísticas reais
   const taskStats = getTaskStats('month');
   const financeStats = getFinancialStats('month');
+  const dietStats = getDietStats('month'); // ✅ OBTER ESTATÍSTICAS DA DIETA
   
   const completionRate = taskStats.total > 0 ? taskStats.completionRate : 0;
   const userName = user?.email?.split('@')[0] || 'Usuário';
@@ -294,7 +302,7 @@ const Dashboard = ({ user }) => {
         </p>
       </div>
 
-      {/* Cards de Estatísticas Reais */}
+      {/* Cards de Estatísticas Reais - ATUALIZADO COM DIETAS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <motion.div
           whileHover={{ scale: 1.02 }}
@@ -312,6 +320,29 @@ const Dashboard = ({ user }) => {
           <div className="mt-2">
             <span className="text-sm text-green-600">
               {completionRate.toFixed(1)}% concluídas
+            </span>
+          </div>
+        </motion.div>
+
+        {/* ✅ NOVO CARD DE DIETAS */}
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          className="bg-white rounded-xl shadow-lg p-6 border border-gray-100"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Refeições Hoje</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {dietStats ? `${dietStats.completedToday}/${dietStats.totalMeals}` : '0/0'}
+              </p>
+            </div>
+            <div className="bg-orange-100 p-3 rounded-full">
+              <ChefHat className="h-6 w-6 text-orange-600" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <span className="text-sm text-orange-600">
+              {dietStats ? `${dietStats.completionRate.toFixed(1)}% concluído` : 'Sem dieta ativa'}
             </span>
           </div>
         </motion.div>
@@ -344,28 +375,6 @@ const Dashboard = ({ user }) => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Despesas do Mês</p>
-              <p className="text-2xl font-bold text-gray-900">
-                R$ {financeStats.totalExpenses.toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-red-100 p-3 rounded-full">
-              <Wallet className="h-6 w-6 text-red-600" />
-            </div>
-          </div>
-          <div className="mt-2">
-            <span className="text-sm text-gray-600">
-              {Object.keys(financeStats.expensesByCategory).length} categorias
-            </span>
-          </div>
-        </motion.div>
-
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          className="bg-white rounded-xl shadow-lg p-6 border border-gray-100"
-        >
-          <div className="flex items-center justify-between">
-            <div>
               <p className="text-sm text-gray-600">Saldo Atual</p>
               <p className={`text-2xl font-bold ${financeStats.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 R$ {financeStats.balance.toLocaleString()}
@@ -383,8 +392,8 @@ const Dashboard = ({ user }) => {
         </motion.div>
       </div>
 
-      {/* Seções de Resumo */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Seções de Resumo - ATUALIZADO COM DIETAS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Resumo de Tarefas */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -426,11 +435,57 @@ const Dashboard = ({ user }) => {
           )}
         </motion.div>
 
-        {/* Resumo Financeiro */}
+        {/* ✅ NOVO RESUMO DE DIETAS */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
+          className="bg-white rounded-xl shadow-lg p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Resumo da Dieta
+          </h3>
+          {currentDiet ? (
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Dieta Ativa</span>
+                <span className="font-semibold text-gray-900">{dietStats.currentDiet}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Calorias Alvo</span>
+                <span className="font-semibold text-orange-600">{dietStats.calories} kcal</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Refeições Hoje</span>
+                <span className="font-semibold text-blue-600">
+                  {dietStats.completedToday}/{dietStats.totalMeals}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Progresso</span>
+                <span className="font-semibold text-green-600">
+                  {dietStats.completionRate.toFixed(1)}%
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Dias Ativa</span>
+                <span className="font-semibold text-purple-600">{dietStats.daysActive} dias</span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <ChefHat className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p>Nenhuma dieta ativa</p>
+              <p className="text-sm">Crie uma dieta para começar!</p>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Resumo Financeiro */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
           className="bg-white rounded-xl shadow-lg p-6"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -471,11 +526,45 @@ const Dashboard = ({ user }) => {
         </motion.div>
       </div>
 
+      {/* ✅ SEÇÃO DE INFORMAÇÕES DA DIETA ATIVA */}
+      {currentDiet && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-8 bg-orange-50 border border-orange-200 rounded-xl p-6"
+        >
+          <div className="flex items-start space-x-3">
+            <ChefHat className="h-6 w-6 text-orange-600 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-orange-900 mb-2">Dieta Atual: {currentDiet.name}</h4>
+              <p className="text-orange-800 text-sm mb-3">
+                <strong>Objetivo:</strong> {currentDiet.objective}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                  {currentDiet.macros.protein}g Proteína
+                </span>
+                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                  {currentDiet.macros.carbs}g Carboidrato
+                </span>
+                <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">
+                  {currentDiet.macros.fat}g Gordura
+                </span>
+                <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+                  {currentDiet.calories} Calorias
+                </span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Dica do Salário */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.4 }}
         className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6"
       >
         <div className="flex items-start space-x-3">
@@ -498,7 +587,7 @@ const Dashboard = ({ user }) => {
   );
 };
 
-// Componente principal do App
+// Componente principal do App - ATUALIZADO COM DIETAS
 const App = () => {
   const { user, loading: authLoading, login, register, logout } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -538,17 +627,19 @@ const App = () => {
     }
   };
 
-  // CORREÇÃO PRINCIPAL: Renderizar componentes REAIS ao invés dos placeholders
+  // ✅ RENDERIZAR COMPONENTES COM DIETAS INCLUÍDAS
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'dashboard':
         return <Dashboard user={user} />;
       case 'tasks':
-        return <TaskManagement />; // ✅ COMPONENTE REAL
+        return <TaskManagement />;
+      case 'diet': // ✅ NOVO CASE PARA DIETAS
+        return <DietManagement />;
       case 'finance':
-        return <FinanceManagement />; // ✅ COMPONENTE REAL
+        return <FinanceManagement />;
       case 'reports':
-        return <Reports />; // ✅ COMPONENTE REAL
+        return <Reports />;
       default:
         return <Dashboard user={user} />;
     }

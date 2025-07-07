@@ -1,553 +1,812 @@
-import React, { useState, useMemo } from 'react';
+// src/components/Dashboard/Reports.js - VERSÃO CORRIGIDA
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
+import {
   BarChart3,
-  TrendingUp, 
-  TrendingDown, 
-  Calendar, 
-  Download, 
-  Target, 
+  TrendingUp,
+  TrendingDown,
+  Calendar,
   CheckCircle,
-  Clock,
-  DollarSign,
-  Activity,
+  Target,
   Award,
-  Info,
-  AlertTriangle,
+  Clock,
+  Utensils,
+  Activity,
+  Download,
+  FileText,
   PieChart,
-  Plus
+  Users,
+  Zap,
+  RefreshCw,
+  AlertCircle,
+  ChefHat,
+  Timer,
+  Star
 } from 'lucide-react';
-import { useTasks } from '../../hooks/useTasks';
+import { useTasks, TASK_TYPES } from '../../hooks/useTasks';
+import { useDiet } from '../../hooks/useDiet';
 import { useFinance } from '../../hooks/useFinance';
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar, 
+  PieChart as RePieChart, 
+  Cell 
+} from 'recharts';
 
-// Componente de Cartão de Métrica
-const MetricCard = ({ title, value, change, icon: Icon, color, prefix = '', suffix = '' }) => (
-  <motion.div
-    whileHover={{ scale: 1.02 }}
-    className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm"
-  >
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-600">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 mt-1">
-          {prefix}{value}{suffix}
-        </p>
-        {change !== undefined && (
-          <div className={`flex items-center mt-2 ${
-            change >= 0 ? 'text-green-600' : 'text-red-600'
-          }`}>
-            {change >= 0 ? (
-              <TrendingUp className="h-4 w-4 mr-1" />
-            ) : (
-              <TrendingDown className="h-4 w-4 mr-1" />
-            )}
-            <span className="text-sm font-medium">
-              {Math.abs(change).toFixed(1)}% vs mês anterior
-            </span>
-          </div>
-        )}
-      </div>
-      <div className={`p-3 rounded-full ${color}`}>
-        <Icon className="h-6 w-6 text-white" />
-      </div>
-    </div>
-  </motion.div>
-);
+// Cores para os gráficos
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
-// Componente de Gráfico Simples
-const SimpleBarChart = ({ data, title }) => {
-  const maxValue = Math.max(...data.map(d => d.value));
-  
+// Componente de Métricas de Consistência
+const ConsistencyMetrics = ({ tasks, period = 'month' }) => {
+  const [metrics, setMetrics] = useState({
+    daily: { total: 0, completed: 0, rate: 0 },
+    weekly: { total: 0, completed: 0, rate: 0 },
+    monthly: { total: 0, completed: 0, rate: 0 }
+  });
+
+  useEffect(() => {
+    const now = new Date();
+    const startDate = new Date();
+    
+    switch (period) {
+      case 'week':
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case 'month':
+        startDate.setMonth(now.getMonth());
+        startDate.setDate(1);
+        break;
+      case 'year':
+        startDate.setFullYear(now.getFullYear());
+        startDate.setMonth(0);
+        startDate.setDate(1);
+        break;
+      default:
+        startDate.setMonth(now.getMonth());
+        startDate.setDate(1);
+    }
+
+    const periodTasks = tasks.filter(task => {
+      if (!task.createdAt) return false;
+      const taskDate = new Date(task.createdAt);
+      return taskDate >= startDate;
+    });
+
+    const dailyTasks = periodTasks.filter(t => t.taskType === TASK_TYPES.DAILY);
+    const weeklyTasks = periodTasks.filter(t => t.taskType === TASK_TYPES.WEEKLY);
+    const monthlyTasks = periodTasks.filter(t => t.taskType === TASK_TYPES.MONTHLY);
+
+    const calcRate = (completed, total) => total > 0 ? (completed / total) * 100 : 0;
+
+    setMetrics({
+      daily: {
+        total: dailyTasks.length,
+        completed: dailyTasks.filter(t => t.completed).length,
+        rate: calcRate(dailyTasks.filter(t => t.completed).length, dailyTasks.length)
+      },
+      weekly: {
+        total: weeklyTasks.length,
+        completed: weeklyTasks.filter(t => t.completed).length,
+        rate: calcRate(weeklyTasks.filter(t => t.completed).length, weeklyTasks.length)
+      },
+      monthly: {
+        total: monthlyTasks.length,
+        completed: monthlyTasks.filter(t => t.completed).length,
+        rate: calcRate(monthlyTasks.filter(t => t.completed).length, monthlyTasks.length)
+      }
+    });
+  }, [tasks, period]);
+
   return (
-    <div className="bg-white rounded-xl p-6 border border-gray-200">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
-      <div className="space-y-3">
-        {data.map((item, index) => (
-          <div key={index} className="flex items-center">
-            <div className="w-20 text-sm text-gray-600 truncate">{item.name}</div>
-            <div className="flex-1 mx-3">
-              <div className="bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${(item.value / maxValue) * 100}%` }}
-                />
-              </div>
-            </div>
-            <div className="w-16 text-sm font-medium text-right text-gray-900">
-              {typeof item.value === 'number' && item.value > 1000 
-                ? `R$ ${item.value.toLocaleString('pt-BR')}`
-                : item.value
-              }
-            </div>
+    <div className="bg-white rounded-xl shadow-lg p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">
+        Consistência na Rotina
+      </h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="text-center">
+          <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-3">
+            <Calendar className="h-8 w-8 text-blue-600" />
           </div>
-        ))}
+          <div className="text-2xl font-bold text-gray-900">
+            {metrics.daily.rate.toFixed(1)}%
+          </div>
+          <div className="text-sm text-gray-600">Tarefas Diárias</div>
+          <div className="text-xs text-gray-500">
+            {metrics.daily.completed}/{metrics.daily.total} concluídas
+          </div>
+        </div>
+
+        <div className="text-center">
+          <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-3">
+            <RefreshCw className="h-8 w-8 text-green-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">
+            {metrics.weekly.rate.toFixed(1)}%
+          </div>
+          <div className="text-sm text-gray-600">Tarefas Semanais</div>
+          <div className="text-xs text-gray-500">
+            {metrics.weekly.completed}/{metrics.weekly.total} concluídas
+          </div>
+        </div>
+
+        <div className="text-center">
+          <div className="bg-purple-100 rounded-full p-4 w-16 h-16 mx-auto mb-3">
+            <BarChart3 className="h-8 w-8 text-purple-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">
+            {metrics.monthly.rate.toFixed(1)}%
+          </div>
+          <div className="text-sm text-gray-600">Tarefas Mensais</div>
+          <div className="text-xs text-gray-500">
+            {metrics.monthly.completed}/{metrics.monthly.total} concluídas
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-// Componente principal de Relatórios
-const Reports = () => {
-  const { getTaskStats, getProductivityChartData, exportTasks } = useTasks();
-  const { getFinancialStats, getChartData, exportFinancialData } = useFinance();
-  
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
-  const [selectedMetric, setSelectedMetric] = useState('overview');
+// Componente de Análise de Dieta
+const DietAnalysis = ({ currentDiet, mealProgress, period = 'week' }) => {
+  const [analysis, setAnalysis] = useState({
+    totalMeals: 0,
+    completedMeals: 0,
+    completionRate: 0,
+    bestMeal: null,
+    worstMeal: null,
+    dailyAverages: []
+  });
 
-  // Obter dados das tarefas
-  const taskStats = useMemo(() => getTaskStats(selectedPeriod), [selectedPeriod, getTaskStats]);
-  const productivityData = useMemo(() => getProductivityChartData(30), [getProductivityChartData]);
-  
-  // Obter dados financeiros
-  const financeStats = useMemo(() => getFinancialStats(selectedPeriod), [selectedPeriod, getFinancialStats]);
-  const chartData = useMemo(() => getChartData(6), [getChartData]);
+  useEffect(() => {
+    if (!currentDiet) return;
 
-  // Calcular mudanças percentuais (simuladas)
-  const getPercentageChange = (current, previous) => {
-    if (previous === 0) return 0;
-    return ((current - previous) / previous) * 100;
-  };
+    const totalMeals = Object.keys(currentDiet.meals || {}).length;
+    const completedMeals = Object.values(mealProgress).filter(p => p.completed).length;
+    const completionRate = totalMeals > 0 ? (completedMeals / totalMeals) * 100 : 0;
 
-  // Simular dados do mês anterior para comparação
-  const previousTaskStats = {
-    completed: Math.max(0, taskStats.completed - Math.floor(Math.random() * 5)),
-    total: Math.max(0, taskStats.total - Math.floor(Math.random() * 8)),
-    completionRate: Math.max(0, taskStats.completionRate - Math.random() * 20)
-  };
+    // Simular dados históricos para análise
+    const dailyAverages = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      
+      // Simular dados de conclusão (seria obtido do histórico real)
+      const dayProgress = Math.random() * 100;
+      
+      dailyAverages.push({
+        date: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+        progress: dayProgress,
+        completed: Math.floor((dayProgress / 100) * totalMeals),
+        total: totalMeals
+      });
+    }
 
-  const previousFinanceStats = {
-    totalIncome: Math.max(0, financeStats.totalIncome - Math.random() * 1000),
-    totalExpenses: Math.max(0, financeStats.totalExpenses - Math.random() * 500),
-    balance: financeStats.balance - Math.random() * 800
-  };
-
-  // Preparar dados para gráficos
-  const categoryTasksData = Object.entries(taskStats.byCategory || {}).map(([category, count]) => ({
-    name: category.charAt(0).toUpperCase() + category.slice(1),
-    value: count
-  }));
-
-  const priorityTasksData = Object.entries(taskStats.byPriority || {}).map(([priority, count]) => ({
-    name: priority.charAt(0).toUpperCase() + priority.slice(1),
-    value: count
-  }));
-
-  const expenseCategoryData = Object.entries(financeStats.expensesByCategory || {}).map(([category, amount]) => ({
-    name: category.charAt(0).toUpperCase() + category.slice(1),
-    value: amount
-  }));
-
-  const monthlyTrendData = chartData.slice(-6).map(item => ({
-    name: item.month,
-    value: item.balance
-  }));
-
-  // Exportar relatórios
-  const handleExportTasks = () => {
-    exportTasks('csv', selectedPeriod);
-  };
-
-  const handleExportFinance = () => {
-    exportFinancialData('csv', selectedPeriod);
-  };
-
-  const handleExportComplete = () => {
-    // Exportar dados combinados
-    const combinedData = {
-      periodo: selectedPeriod,
-      dataGeracao: new Date().toISOString(),
-      tarefas: taskStats,
-      financas: financeStats,
-      tendencias: chartData
-    };
-
-    const blob = new Blob([JSON.stringify(combinedData, null, 2)], {
-      type: 'application/json'
+    setAnalysis({
+      totalMeals,
+      completedMeals,
+      completionRate,
+      bestMeal: 'lunch',
+      worstMeal: 'lateSnack',
+      dailyAverages
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `relatorio_completo_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  }, [currentDiet, mealProgress]);
+
+  if (!currentDiet) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="text-center py-8">
+          <ChefHat className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Nenhuma dieta ativa
+          </h3>
+          <p className="text-gray-600">
+            Crie uma dieta para ver análises detalhadas
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">
+        Análise da Dieta - {currentDiet.name}
+      </h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">Progresso Hoje</span>
+            <span className="text-lg font-semibold text-gray-900">
+              {analysis.completedMeals}/{analysis.totalMeals}
+            </span>
+          </div>
+          
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div 
+              className="bg-green-500 h-3 rounded-full transition-all duration-300"
+              style={{ width: `${analysis.completionRate}%` }}
+            />
+          </div>
+          
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {analysis.completionRate.toFixed(1)}%
+            </div>
+            <div className="text-sm text-gray-600">Taxa de Conclusão</div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="text-center">
+            <div className="text-lg font-semibold text-gray-900">
+              {currentDiet.calories} kcal
+            </div>
+            <div className="text-sm text-gray-600">Meta Calórica</div>
+          </div>
+          
+          <div className="flex justify-center space-x-4">
+            <div className="text-center">
+              <div className="text-sm font-medium text-blue-600">
+                {currentDiet.macros.protein}g
+              </div>
+              <div className="text-xs text-gray-500">Proteína</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm font-medium text-green-600">
+                {currentDiet.macros.carbs}g
+              </div>
+              <div className="text-xs text-gray-500">Carboidrato</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm font-medium text-orange-600">
+                {currentDiet.macros.fat}g
+              </div>
+              <div className="text-xs text-gray-500">Gordura</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <h4 className="text-sm font-medium text-gray-900 mb-3">
+          Progresso dos Últimos 7 Dias
+        </h4>
+        <div className="h-32">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={analysis.dailyAverages}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip 
+                formatter={(value) => [`${value.toFixed(1)}%`, 'Conclusão']}
+                labelFormatter={(label) => `Data: ${label}`}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="progress" 
+                stroke="#10B981" 
+                strokeWidth={2}
+                dot={{ r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Componente de Produtividade por Categoria
+const ProductivityByCategory = ({ tasks, period = 'month' }) => {
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    const now = new Date();
+    const startDate = new Date();
+    
+    switch (period) {
+      case 'week':
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case 'month':
+        startDate.setMonth(now.getMonth());
+        startDate.setDate(1);
+        break;
+      case 'year':
+        startDate.setFullYear(now.getFullYear());
+        startDate.setMonth(0);
+        startDate.setDate(1);
+        break;
+      default:
+        startDate.setMonth(now.getMonth());
+        startDate.setDate(1);
+    }
+
+    const periodTasks = tasks.filter(task => {
+      if (!task.createdAt) return false;
+      const taskDate = new Date(task.createdAt);
+      return taskDate >= startDate;
+    });
+
+    const categoryData = periodTasks.reduce((acc, task) => {
+      const category = task.category || 'other';
+      if (!acc[category]) {
+        acc[category] = { total: 0, completed: 0 };
+      }
+      acc[category].total += 1;
+      if (task.completed) {
+        acc[category].completed += 1;
+      }
+      return acc;
+    }, {});
+
+    const chartData = Object.entries(categoryData).map(([category, stats]) => ({
+      category: category === 'work' ? 'Trabalho' : 
+                category === 'personal' ? 'Pessoal' :
+                category === 'health' ? 'Saúde' :
+                category === 'study' ? 'Estudos' :
+                category === 'finance' ? 'Finanças' : 'Outros',
+      total: stats.total,
+      completed: stats.completed,
+      rate: stats.total > 0 ? (stats.completed / stats.total) * 100 : 0
+    }));
+
+    setData(chartData);
+  }, [tasks, period]);
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">
+        Produtividade por Categoria
+      </h3>
+      
+      <div className="h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="category" />
+            <YAxis />
+            <Tooltip 
+              formatter={(value, name) => [
+                name === 'total' ? value : `${value.toFixed(1)}%`,
+                name === 'total' ? 'Total' : name === 'completed' ? 'Concluídas' : 'Taxa'
+              ]}
+            />
+            <Bar dataKey="total" fill="#E5E7EB" />
+            <Bar dataKey="completed" fill="#10B981" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+};
+
+// Componente de Gráfico de Tendências - CORRIGIDO
+const TrendChart = ({ tasks, finances, period = 'month' }) => {
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    const now = new Date();
+    const chartData = [];
+    
+    const daysToShow = period === 'week' ? 7 : period === 'month' ? 30 : 365;
+    
+    for (let i = daysToShow - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      
+      const dayTasks = tasks.filter(task => {
+        if (!task.createdAt) return false;
+        const taskDate = new Date(task.createdAt);
+        return taskDate.toDateString() === date.toDateString();
+      });
+      
+      const dayFinances = finances.filter(transaction => {
+        if (!transaction.date) return false;
+        const transactionDate = new Date(transaction.date);
+        return transactionDate.toDateString() === date.toDateString();
+      });
+
+      const completedTasks = dayTasks.filter(t => t.completed).length;
+      const totalExpenses = dayFinances
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      chartData.push({
+        date: date.toLocaleDateString('pt-BR', { 
+          day: '2-digit', 
+          month: '2-digit' 
+        }),
+        tasks: completedTasks,
+        expenses: totalExpenses,
+        productivity: dayTasks.length > 0 ? (completedTasks / dayTasks.length) * 100 : 0
+      });
+    }
+
+    setData(chartData);
+  }, [tasks, finances, period]);
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">
+        Tendências de Produtividade
+      </h3>
+      
+      <div className="h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis yAxisId="left" />
+            <YAxis yAxisId="right" orientation="right" />
+            <Tooltip 
+              formatter={(value, name) => [
+                name === 'productivity' ? `${value.toFixed(1)}%` : 
+                name === 'expenses' ? `R$ ${value.toFixed(2)}` : value,
+                name === 'productivity' ? 'Produtividade' : 
+                name === 'expenses' ? 'Gastos' : 'Tarefas'
+              ]}
+            />
+            <Line 
+              yAxisId="left"
+              type="monotone" 
+              dataKey="productivity" 
+              stroke="#3B82F6" 
+              strokeWidth={2}
+            />
+            <Line 
+              yAxisId="left"
+              type="monotone" 
+              dataKey="tasks" 
+              stroke="#10B981" 
+              strokeWidth={2}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+};
+
+// Componente de Resumo Executivo
+const ExecutiveSummary = ({ tasks, currentDiet, finances, period = 'month' }) => {
+  const [summary, setSummary] = useState({
+    totalTasks: 0,
+    completedTasks: 0,
+    productivityRate: 0,
+    dietCompliance: 0,
+    financialHealth: 0,
+    recommendations: []
+  });
+
+  useEffect(() => {
+    const now = new Date();
+    const startDate = new Date();
+    
+    switch (period) {
+      case 'week':
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case 'month':
+        startDate.setMonth(now.getMonth());
+        startDate.setDate(1);
+        break;
+      case 'year':
+        startDate.setFullYear(now.getFullYear());
+        startDate.setMonth(0);
+        startDate.setDate(1);
+        break;
+      default:
+        startDate.setMonth(now.getMonth());
+        startDate.setDate(1);
+    }
+
+    const periodTasks = tasks.filter(task => {
+      if (!task.createdAt) return false;
+      const taskDate = new Date(task.createdAt);
+      return taskDate >= startDate;
+    });
+
+    const totalTasks = periodTasks.length;
+    const completedTasks = periodTasks.filter(t => t.completed).length;
+    const productivityRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+    // Calcular compliance da dieta (simulado)
+    const dietCompliance = currentDiet ? 75 : 0;
+
+    // Calcular saúde financeira (simulado)
+    const totalIncome = finances.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = finances.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const financialHealth = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
+
+    // Gerar recomendações
+    const recommendations = [];
+    if (productivityRate < 70) {
+      recommendations.push('Considere revisar suas metas diárias para aumentar a produtividade');
+    }
+    if (dietCompliance < 80 && currentDiet) {
+      recommendations.push('Mantenha maior consistência na dieta para melhores resultados');
+    }
+    if (financialHealth < 20) {
+      recommendations.push('Revise seus gastos para melhorar a saúde financeira');
+    }
+
+    setSummary({
+      totalTasks,
+      completedTasks,
+      productivityRate,
+      dietCompliance,
+      financialHealth,
+      recommendations
+    });
+  }, [tasks, currentDiet, finances, period]);
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">
+        Resumo Executivo
+      </h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-blue-600">
+            {summary.productivityRate.toFixed(1)}%
+          </div>
+          <div className="text-sm text-gray-600">Produtividade</div>
+        </div>
+        
+        <div className="text-center">
+          <div className="text-2xl font-bold text-green-600">
+            {summary.dietCompliance.toFixed(1)}%
+          </div>
+          <div className="text-sm text-gray-600">Compliance Dieta</div>
+        </div>
+        
+        <div className="text-center">
+          <div className="text-2xl font-bold text-purple-600">
+            {summary.financialHealth.toFixed(1)}%
+          </div>
+          <div className="text-sm text-gray-600">Saúde Financeira</div>
+        </div>
+      </div>
+
+      {summary.recommendations.length > 0 && (
+        <div className="bg-blue-50 rounded-lg p-4">
+          <h4 className="font-medium text-blue-900 mb-2">Recomendações:</h4>
+          <ul className="space-y-1">
+            {summary.recommendations.map((rec, index) => (
+              <li key={index} className="text-sm text-blue-800 flex items-start">
+                <Star className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                {rec}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente Principal - CORRIGIDO
+const Reports = () => {
+  const { 
+    tasks, 
+    dailyTasks, 
+    weeklyTasks, 
+    monthlyTasks, 
+    mealTasks,
+    loading: tasksLoading,
+    exportTasks
+  } = useTasks();
+
+  const { 
+    currentDiet, 
+    mealProgress,
+    loading: dietLoading 
+  } = useDiet();
+
+  const { 
+    transactions,
+    loading: financeLoading,
+    exportFinancialData
+  } = useFinance();
+
+  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [selectedView, setSelectedView] = useState('overview');
+
+  const allTasks = [...tasks, ...dailyTasks, ...weeklyTasks, ...monthlyTasks, ...mealTasks];
+  const isLoading = tasksLoading || dietLoading || financeLoading;
+
+  const handleExportData = () => {
+    const confirmExport = window.confirm('Deseja exportar todos os dados de relatório?');
+    if (confirmExport) {
+      exportTasks('json', selectedPeriod, 'all');
+      if (exportFinancialData) {
+        exportFinancialData('json', selectedPeriod);
+      }
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Relatórios</h1>
-          <p className="text-gray-600 mt-2">Análise detalhada do seu desempenho</p>
-        </div>
-        <div className="flex items-center space-x-4 mt-4 sm:mt-0">
-          <select
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="week">Última Semana</option>
-            <option value="month">Último Mês</option>
-            <option value="quarter">Último Trimestre</option>
-            <option value="year">Último Ano</option>
-          </select>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleExportComplete}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center space-x-2"
-          >
-            <Download className="h-4 w-4" />
-            <span>Exportar Relatório</span>
-          </motion.button>
-        </div>
-      </div>
-
-      {/* Seletor de Métricas */}
-      <div className="bg-white rounded-xl p-6 mb-8 border border-gray-200">
-        <div className="flex flex-wrap gap-2 mb-6">
-          {[
-            { key: 'overview', label: 'Visão Geral' },
-            { key: 'tasks', label: 'Tarefas' },
-            { key: 'finance', label: 'Finanças' },
-            { key: 'trends', label: 'Tendências' }
-          ].map((metric) => (
-            <button
-              key={metric.key}
-              onClick={() => setSelectedMetric(metric.key)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                selectedMetric === metric.key
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {metric.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Visão Geral */}
-        {selectedMetric === 'overview' && (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <MetricCard
-                title="Taxa de Conclusão"
-                value={taskStats.completionRate.toFixed(1)}
-                change={getPercentageChange(taskStats.completionRate, previousTaskStats.completionRate)}
-                icon={CheckCircle}
-                color="bg-green-500"
-                suffix="%"
-              />
-              <MetricCard
-                title="Tarefas Concluídas"
-                value={taskStats.completed}
-                change={getPercentageChange(taskStats.completed, previousTaskStats.completed)}
-                icon={Target}
-                color="bg-blue-500"
-              />
-              <MetricCard
-                title="Saldo Atual"
-                value={financeStats.balance.toLocaleString('pt-BR')}
-                change={getPercentageChange(financeStats.balance, previousFinanceStats.balance)}
-                icon={DollarSign}
-                color="bg-green-500"
-                prefix="R$ "
-              />
-              <MetricCard
-                title="Economia Mensal"
-                value={financeStats.totalIncome > 0 ? ((financeStats.balance / financeStats.totalIncome) * 100).toFixed(1) : '0'}
-                change={5.2}
-                icon={PieChart}
-                color="bg-purple-500"
-                suffix="%"
-              />
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="bg-purple-100 p-3 rounded-full">
+              <BarChart3 className="h-8 w-8 text-purple-600" />
             </div>
-
-            {/* Resumo Rápido */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-white rounded-xl p-6 border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Resumo de Produtividade
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Total de Tarefas</span>
-                    <span className="font-semibold text-gray-900">{taskStats.total}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Concluídas</span>
-                    <span className="font-semibold text-green-600">{taskStats.completed}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Pendentes</span>
-                    <span className="font-semibold text-blue-600">{taskStats.pending}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Vencidas</span>
-                    <span className="font-semibold text-red-600">{taskStats.overdue}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Resumo Financeiro
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Receitas</span>
-                    <span className="font-semibold text-green-600">
-                      R$ {financeStats.totalIncome.toLocaleString('pt-BR')}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Despesas</span>
-                    <span className="font-semibold text-red-600">
-                      R$ {financeStats.totalExpenses.toLocaleString('pt-BR')}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Transações</span>
-                    <span className="font-semibold text-gray-900">{financeStats.transactionCount}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Maior Categoria</span>
-                    <span className="font-semibold text-gray-900">
-                      R$ {Math.max(...Object.values(financeStats.expensesByCategory || {}), 0).toLocaleString('pt-BR')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Relatório de Tarefas */}
-        {selectedMetric === 'tasks' && (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <MetricCard
-                title="Taxa de Conclusão"
-                value={taskStats.completionRate.toFixed(1)}
-                change={getPercentageChange(taskStats.completionRate, previousTaskStats.completionRate)}
-                icon={CheckCircle}
-                color="bg-green-500"
-                suffix="%"
-              />
-              <MetricCard
-                title="Tarefas Criadas"
-                value={taskStats.total}
-                change={getPercentageChange(taskStats.total, previousTaskStats.total)}
-                icon={Plus}
-                color="bg-blue-500"
-              />
-              <MetricCard
-                title="Tempo Estimado"
-                value={taskStats.totalEstimatedTime || 0}
-                change={8}
-                icon={Clock}
-                color="bg-purple-500"
-                suffix=" min"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {categoryTasksData.length > 0 && (
-                <SimpleBarChart
-                  data={categoryTasksData}
-                  title="Tarefas por Categoria"
-                />
-              )}
-              
-              {priorityTasksData.length > 0 && (
-                <SimpleBarChart
-                  data={priorityTasksData}
-                  title="Tarefas por Prioridade"
-                />
-              )}
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={handleExportTasks}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <Download className="h-4 w-4" />
-                <span>Exportar Dados de Tarefas</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Relatório Financeiro */}
-        {selectedMetric === 'finance' && (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <MetricCard
-                title="Receita Total"
-                value={financeStats.totalIncome.toLocaleString('pt-BR')}
-                change={getPercentageChange(financeStats.totalIncome, previousFinanceStats.totalIncome)}
-                icon={TrendingUp}
-                color="bg-green-500"
-                prefix="R$ "
-              />
-              <MetricCard
-                title="Gastos Totais"
-                value={financeStats.totalExpenses.toLocaleString('pt-BR')}
-                change={getPercentageChange(financeStats.totalExpenses, previousFinanceStats.totalExpenses)}
-                icon={TrendingDown}
-                color="bg-red-500"
-                prefix="R$ "
-              />
-              <MetricCard
-                title="Taxa de Economia"
-                value={financeStats.totalIncome > 0 ? ((financeStats.balance / financeStats.totalIncome) * 100).toFixed(1) : '0'}
-                change={15}
-                icon={PieChart}
-                color="bg-blue-500"
-                suffix="%"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {expenseCategoryData.length > 0 && (
-                <SimpleBarChart
-                  data={expenseCategoryData}
-                  title="Gastos por Categoria"
-                />
-              )}
-              
-              {monthlyTrendData.length > 0 && (
-                <SimpleBarChart
-                  data={monthlyTrendData}
-                  title="Evolução do Saldo (6 meses)"
-                />
-              )}
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                onClick={handleExportFinance}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <Download className="h-4 w-4" />
-                <span>Exportar Dados Financeiros</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Tendências */}
-        {selectedMetric === 'trends' && (
-          <div className="space-y-8">
-            <div className="bg-white rounded-xl p-6 border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Insights e Recomendações
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="bg-green-100 p-2 rounded-full">
-                    <TrendingUp className="h-4 w-4 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Produtividade Consistente</p>
-                    <p className="text-sm text-gray-600">
-                      Sua taxa de conclusão está em {taskStats.completionRate.toFixed(1)}%. 
-                      {taskStats.completionRate >= 70 ? ' Excelente trabalho!' : ' Tente melhorar gradualmente.'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3">
-                  <div className="bg-blue-100 p-2 rounded-full">
-                    <DollarSign className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Controle Financeiro</p>
-                    <p className="text-sm text-gray-600">
-                      {financeStats.balance >= 0 
-                        ? `Parabéns! Você tem um saldo positivo de R$ ${financeStats.balance.toLocaleString('pt-BR')}.`
-                        : 'Atenção: seu saldo está negativo. Revise seus gastos.'
-                      }
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3">
-                  <div className="bg-yellow-100 p-2 rounded-full">
-                    <Clock className="h-4 w-4 text-yellow-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Gestão de Tempo</p>
-                    <p className="text-sm text-gray-600">
-                      {taskStats.overdue > 0 
-                        ? `Você tem ${taskStats.overdue} tarefa(s) vencida(s). Priorize-as!`
-                        : 'Ótimo! Nenhuma tarefa vencida no momento.'
-                      }
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3">
-                  <div className="bg-purple-100 p-2 rounded-full">
-                    <Award className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Próximas Metas</p>
-                    <p className="text-sm text-gray-600">
-                      Continue focado! Tente manter uma taxa de conclusão acima de 80% 
-                      e uma economia mensal de pelo menos 20%.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Dados de Produtividade dos Últimos 30 Dias */}
-            {productivityData.length > 0 && (
-              <div className="bg-white rounded-xl p-6 border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Produtividade Diária (Últimos 30 dias)
-                </h3>
-                <div className="grid grid-cols-7 gap-2">
-                  {productivityData.slice(-21).map((day, index) => (
-                    <div key={index} className="text-center">
-                      <div className="text-xs text-gray-500 mb-1">{day.day}</div>
-                      <div className={`h-8 rounded flex items-center justify-center text-xs font-medium ${
-                        day.completed > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {day.completed}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-sm text-gray-600 mt-4">
-                  Cada célula mostra o número de tarefas concluídas no dia.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Aviso sobre Dados */}
-      {(taskStats.total === 0 && financeStats.transactionCount === 0) && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
-          <div className="flex items-start space-x-3">
-            <Info className="h-6 w-6 text-yellow-600 mt-0.5" />
             <div>
-              <h4 className="font-semibold text-yellow-900 mb-2">Dados Insuficientes</h4>
-              <p className="text-yellow-800 text-sm mb-3">
-                Para gerar relatórios mais precisos, você precisa de mais dados. 
-                Comece criando tarefas e registrando transações financeiras.
-              </p>
-              <p className="text-yellow-700 text-sm">
-                💡 <strong>Dica:</strong> Use o sistema por pelo menos uma semana para obter insights valiosos!
+              <h1 className="text-3xl font-bold text-gray-900">
+                Relatórios e Análises
+              </h1>
+              <p className="text-gray-600">
+                Insights detalhados sobre sua produtividade e rotina
               </p>
             </div>
           </div>
+          
+          <div className="flex space-x-3">
+            <select
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="week">Última Semana</option>
+              <option value="month">Este Mês</option>
+              <option value="year">Este Ano</option>
+            </select>
+            
+            <button
+              onClick={handleExportData}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            >
+              <Download className="h-4 w-4" />
+              <span>Exportar</span>
+            </button>
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* Navegação de Visualizações */}
+      <div className="mb-8">
+        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+          {[
+            { id: 'overview', label: 'Visão Geral', icon: Target },
+            { id: 'consistency', label: 'Consistência', icon: CheckCircle },
+            { id: 'diet', label: 'Dieta', icon: Utensils },
+            { id: 'productivity', label: 'Produtividade', icon: TrendingUp }
+          ].map((view) => {
+            const Icon = view.icon;
+            return (
+              <button
+                key={view.id}
+                onClick={() => setSelectedView(view.id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                  selectedView === view.id
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{view.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Conteúdo dos Relatórios */}
+      <div className="space-y-8">
+        {selectedView === 'overview' && (
+          <>
+            <ExecutiveSummary 
+              tasks={allTasks}
+              currentDiet={currentDiet}
+              finances={transactions}
+              period={selectedPeriod}
+            />
+            <TrendChart 
+              tasks={allTasks}
+              finances={transactions}
+              period={selectedPeriod}
+            />
+          </>
+        )}
+
+        {selectedView === 'consistency' && (
+          <>
+            <ConsistencyMetrics 
+              tasks={allTasks}
+              period={selectedPeriod}
+            />
+            <ProductivityByCategory 
+              tasks={allTasks}
+              period={selectedPeriod}
+            />
+          </>
+        )}
+
+        {selectedView === 'diet' && (
+          <DietAnalysis 
+            currentDiet={currentDiet}
+            mealProgress={mealProgress}
+            period={selectedPeriod}
+          />
+        )}
+
+        {selectedView === 'productivity' && (
+          <>
+            <ProductivityByCategory 
+              tasks={allTasks}
+              period={selectedPeriod}
+            />
+            <TrendChart 
+              tasks={allTasks}
+              finances={transactions}
+              period={selectedPeriod}
+            />
+          </>
+        )}
+      </div>
+
+      {/* Resumo de Dados */}
+      <div className="mt-8 bg-gray-50 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Resumo dos Dados
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg p-4">
+            <div className="text-2xl font-bold text-blue-600">
+              {allTasks.length}
+            </div>
+            <div className="text-sm text-gray-600">Total de Tarefas</div>
+          </div>
+          
+          <div className="bg-white rounded-lg p-4">
+            <div className="text-2xl font-bold text-green-600">
+              {dailyTasks.length}
+            </div>
+            <div className="text-sm text-gray-600">Tarefas Diárias</div>
+          </div>
+          
+          <div className="bg-white rounded-lg p-4">
+            <div className="text-2xl font-bold text-orange-600">
+              {transactions.length}
+            </div>
+            <div className="text-sm text-gray-600">Transações</div>
+          </div>
+          
+          <div className="bg-white rounded-lg p-4">
+            <div className="text-2xl font-bold text-purple-600">
+              {currentDiet ? 1 : 0}
+            </div>
+            <div className="text-sm text-gray-600">Dieta Ativa</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

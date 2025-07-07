@@ -1,90 +1,118 @@
+{
+  "indexes": [
     {
-    "indexes": [
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
         {
-        "collectionGroup": "tasks",
-        "queryScope": "COLLECTION",
-        "fields": [
-            {
-            "fieldPath": "userId",
-            "order": "ASCENDING"
-            },
-            {
-            "fieldPath": "createdAt",
-            "order": "DESCENDING"
-            }
-        ]
+          "fieldPath": "userId",
+          "order": "ASCENDING"
         },
         {
-        "collectionGroup": "tasks",
-        "queryScope": "COLLECTION",
-        "fields": [
-            {
-            "fieldPath": "userId",
-            "order": "ASCENDING"
-            },
-            {
-            "fieldPath": "completed",
-            "order": "ASCENDING"
-            },
-            {
-            "fieldPath": "dueDate",
-            "order": "ASCENDING"
-            }
-        ]
-        },
-        {
-        "collectionGroup": "tasks",
-        "queryScope": "COLLECTION",
-        "fields": [
-            {
-            "fieldPath": "userId",
-            "order": "ASCENDING"
-            },
-            {
-            "fieldPath": "category",
-            "order": "ASCENDING"
-            },
-            {
-            "fieldPath": "createdAt",
-            "order": "DESCENDING"
-            }
-        ]
-        },
-        {
-        "collectionGroup": "transactions",
-        "queryScope": "COLLECTION",
-        "fields": [
-            {
-            "fieldPath": "userId",
-            "order": "ASCENDING"
-            },
-            {
-            "fieldPath": "date",
-            "order": "DESCENDING"
-            },
-            {
-            "fieldPath": "createdAt",
-            "order": "DESCENDING"
-            }
-        ]
-        },
-        {
-        "collectionGroup": "transactions",
-        "queryScope": "COLLECTION",
-        "fields": [
-            {
-            "fieldPath": "userId",
-            "order": "ASCENDING"
-            },
-            {
-            "fieldPath": "type",
-            "order": "ASCENDING"
-            },
-            {
-            "fieldPath": "date",
-            "order": "DESCENDING"
-            }
-        ]
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
         }
-    ]
+      ]
+    },
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "completed",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dueDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "taskType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "transactions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "transactions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "type",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "mealProgress",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "dietHistory",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "endedAt",
+          "order": "DESCENDING"
+        }
+      ]
     }
+  ]
+}

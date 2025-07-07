@@ -1,79 +1,75 @@
-// firestore.rules - VERSÃO TEMPORÁRIA SIMPLIFICADA
+// firestore.rules - VERSÃO SIMPLIFICADA PARA TESTE
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Função auxiliar simples
-    function isAuthenticated() {
-      return request.auth != null;
-    }
+    // REGRAS SIMPLES PARA DESENVOLVIMENTO
+    // ⚠️ ATENÇÃO: Para desenvolvimento apenas, não usar em produção
     
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-    
-    // REGRAS SIMPLIFICADAS PARA DEBUGGING
-    
-    // Usuários - acesso total ao próprio documento
+    // Usuários - apenas o próprio
     match /users/{userId} {
-      allow read, write: if isAuthenticated() && isOwner(userId);
-      allow create: if isAuthenticated() && isOwner(userId);
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Tarefas - REGRAS SIMPLIFICADAS
+    // Tarefas - apenas o dono
     match /tasks/{taskId} {
-      // Leitura: apenas o dono
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      
-      // Criação: validação mínima
-      allow create: if isAuthenticated()
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.title is string
-        && request.resource.data.title.size() > 0;
-      
-      // Atualização: apenas o dono
-      allow update: if isAuthenticated() 
-        && resource.data.userId == request.auth.uid
-        && request.resource.data.userId == request.auth.uid;
-      
-      // Exclusão: apenas o dono
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
     
-    // Transações financeiras - REGRAS SIMPLIFICADAS
+    // Transações - apenas o dono
     match /transactions/{transactionId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      
-      allow create: if isAuthenticated()
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.description is string
-        && request.resource.data.amount is number
-        && request.resource.data.type in ['income', 'expense'];
-      
-      allow update: if isAuthenticated() 
-        && resource.data.userId == request.auth.uid
-        && request.resource.data.userId == request.auth.uid;
-      
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
     
-    // Outras coleções - acesso completo ao próprio usuário
-    match /goals/{goalId} {
-      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    // Dietas do usuário - apenas o próprio
+    match /userDiets/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    match /categories/{categoryId} {
-      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    // Progresso das refeições - apenas o dono
+    match /mealProgress/{progressId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
     
+    // Histórico de dietas - apenas o dono
+    match /dietHistory/{historyId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Configurações - apenas o próprio
     match /settings/{userId} {
-      allow read, write: if isAuthenticated() && isOwner(userId);
-      allow create: if isAuthenticated() && isOwner(userId);
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Negar acesso a tudo que não foi especificado
+    // Metas - apenas o dono
+    match /goals/{goalId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Categorias - apenas o dono
+    match /categories/{categoryId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Relatórios - apenas o dono
+    match /reports/{reportId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Backups - apenas o dono
+    match /backups/{backupId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Bloquear acesso a tudo que não foi especificado
     match /{document=**} {
       allow read, write: if false;
     }
