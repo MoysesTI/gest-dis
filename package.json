@@ -4,6 +4,9 @@
   "description": "Sistema completo de gestão de tarefas e finanças pessoais",
   "main": "src/index.js",
   "scripts": {
+    "build:pwa": "node build-pwa.js",
+    "serve:pwa": "npx serve -s build -l 3000",
+    "validate:pwa": "node build-pwa.js --validate",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -20,7 +23,8 @@
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "analyze": "npm run build && npx source-map-explorer 'build/static/js/*.js'",
-    "clean": "rm -rf build node_modules && npm install"
+    "clean": "rm -rf build node_modules && npm install",
+    "post-build": "node build-pwa.js --post"
   },
   "dependencies": {
     "autoprefixer": "^10.4.16",

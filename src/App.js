@@ -1,11 +1,11 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User, 
-  CheckSquare, 
-  DollarSign, 
-  BarChart3, 
-  Settings, 
+import {
+  User,
+  CheckSquare,
+  DollarSign,
+  BarChart3,
+  Settings,
   LogOut,
   Menu,
   X,
@@ -52,12 +52,12 @@ import {
 import { useAuth } from './contexts/AuthContext';
 import { useTasks } from './hooks/useTasks';
 import { useFinance } from './hooks/useFinance';
-import { useDiet } from './hooks/useDiet'; // ✅ ADICIONAR HOOK DE DIETAS
+import { useDiet } from './hooks/useDiet'; // ADICIONAR HOOK DE DIETAS
 
 // IMPORTAR TODOS OS COMPONENTES PRINCIPAIS
 import TaskManagement from './components/Tasks/TaskManagement';
 import FinanceManagement from './components/Finance/FinanceManagement';
-import DietManagement from './components/Diet/DietManagement'; // ✅ ADICIONAR COMPONENTE DE DIETAS
+import DietManagement from './components/Diet/DietManagement'; // ADICIONAR COMPONENTE DE DIETAS
 import Reports from './components/Dashboard/Reports';
 
 // Context da aplicação
@@ -90,7 +90,7 @@ const LoginForm = ({ onLogin, onRegister, isLoading }) => {
 
   const handleSubmit = () => {
     if (!email || !password) return;
-    
+
     if (isRegisterMode) {
       onRegister(email, password);
     } else {
@@ -174,11 +174,11 @@ const LoginForm = ({ onLogin, onRegister, isLoading }) => {
 const Navigation = ({ currentPage, onPageChange, user, onLogout }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // ✅ ADICIONAR DIETAS NO MENU
+  // ADICIONAR DIETAS NO MENU
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'tasks', label: 'Tarefas', icon: CheckSquare },
-    { id: 'diet', label: 'Dietas', icon: ChefHat }, // ✅ NOVO ITEM DE MENU
+    { id: 'diet', label: 'Dietas', icon: ChefHat }, // NOVO ITEM DE MENU
     { id: 'finance', label: 'Finanças', icon: Wallet },
     { id: 'reports', label: 'Relatórios', icon: BarChart3 },
   ];
@@ -281,13 +281,13 @@ const Navigation = ({ currentPage, onPageChange, user, onLogout }) => {
 const Dashboard = ({ user }) => {
   const { getTaskStats } = useTasks();
   const { getFinancialStats, userFinancialConfig } = useFinance();
-  const { getDietStats, currentDiet } = useDiet(); // ✅ ADICIONAR HOOK DE DIETAS
-  
+  const { getDietStats, currentDiet } = useDiet(); // ADICIONAR HOOK DE DIETAS
+
   // Obter estatísticas reais
   const taskStats = getTaskStats('month');
   const financeStats = getFinancialStats('month');
-  const dietStats = getDietStats('month'); // ✅ OBTER ESTATÍSTICAS DA DIETA
-  
+  const dietStats = getDietStats('month'); // OBTER ESTATÍSTICAS DA DIETA
+
   const completionRate = taskStats.total > 0 ? taskStats.completionRate : 0;
   const userName = user?.email?.split('@')[0] || 'Usuário';
 
@@ -324,7 +324,7 @@ const Dashboard = ({ user }) => {
           </div>
         </motion.div>
 
-        {/* ✅ NOVO CARD DE DIETAS */}
+        {/* NOVO CARD DE DIETAS */}
         <motion.div
           whileHover={{ scale: 1.02 }}
           className="bg-white rounded-xl shadow-lg p-6 border border-gray-100"
@@ -435,7 +435,7 @@ const Dashboard = ({ user }) => {
           )}
         </motion.div>
 
-        {/* ✅ NOVO RESUMO DE DIETAS */}
+        {/* NOVO RESUMO DE DIETAS */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -526,7 +526,7 @@ const Dashboard = ({ user }) => {
         </motion.div>
       </div>
 
-      {/* ✅ SEÇÃO DE INFORMAÇÕES DA DIETA ATIVA */}
+      {/* SEÇÃO DE INFORMAÇÕES DA DIETA ATIVA */}
       {currentDiet && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -572,9 +572,9 @@ const Dashboard = ({ user }) => {
           <div>
             <h4 className="font-semibold text-blue-900 mb-2">Configuração do Salário</h4>
             <p className="text-blue-800 text-sm mb-3">
-              Sua renda mensal configurada é de <strong>R$ {userFinancialConfig.monthlyIncome.total.toLocaleString()}</strong> 
-              (Salário base: R$ {userFinancialConfig.monthlyIncome.base.toLocaleString()}, 
-              Auxílio transporte: R$ {userFinancialConfig.monthlyIncome.transport.toLocaleString()}, 
+              Sua renda mensal configurada é de <strong>R$ {userFinancialConfig.monthlyIncome.total.toLocaleString()}</strong>
+              (Salário base: R$ {userFinancialConfig.monthlyIncome.base.toLocaleString()},
+              Auxílio transporte: R$ {userFinancialConfig.monthlyIncome.transport.toLocaleString()},
               Horas extras: R$ {userFinancialConfig.monthlyIncome.overtime.toLocaleString()}).
             </p>
             <p className="text-blue-700 text-sm">
@@ -587,11 +587,243 @@ const Dashboard = ({ user }) => {
   );
 };
 
-// Componente principal do App - ATUALIZADO COM DIETAS
+// Custom Hook para PWA
+const usePWA = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    // Detectar status da rede
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Detectar prompt de instalação
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+
+    // Detectar se foi instalado
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setInstallPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Verificar se já está instalado
+    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const installApp = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+
+      if (outcome === 'accepted') {
+        console.log('✅ PWA instalado pelo usuário');
+      } else {
+        console.log('❌ Usuário recusou instalação PWA');
+      }
+
+      setInstallPrompt(null);
+    }
+  };
+
+  return {
+    isOnline,
+    installPrompt,
+    isInstalled,
+    installApp
+  };
+};
+
+// Componente de Status de Rede
+const NetworkStatus = ({ isOnline }) => {
+  if (isOnline) return null;
+
+  return (
+    <div className="fixed top-0 left-0 w-full bg-red-600 text-white text-center py-2 z-50">
+      <div className="flex items-center justify-center space-x-2">
+        <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+        <span className="text-sm font-medium">
+          Você está offline - Algumas funcionalidades podem estar limitadas
+        </span>
+      </div>
+    </div>
+  );
+};
+
+// Componente de Botão de Instalação
+const InstallButton = ({ installPrompt, installApp, isInstalled }) => {
+  if (!installPrompt || isInstalled) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 100 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
+    >
+      <button
+        onClick={installApp}
+        className="bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 font-semibold"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18l9-9M12 18l-9-9M12 18V2" />
+        </svg>
+        <span>📱 Instalar App</span>
+      </button>
+    </motion.div>
+  );
+};
+
+// Componente de Modal para Atualização
+const UpdateModal = ({ show, onConfirm, onCancel }) => {
+  if (!show) return null;
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-[100]">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="bg-white rounded-lg shadow-xl p-6 max-w-sm mx-auto"
+      >
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Nova Versão Disponível!</h3>
+        <p className="text-gray-700 mb-6">Uma nova versão do aplicativo está disponível. Deseja atualizar agora?</p>
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Atualizar
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+
+// Componente PWAFeatures para agrupar funcionalidades PWA
+const PWAFeatures = ({ setShowTaskModal }) => {
+  const { isOnline, installPrompt, isInstalled, installApp } = usePWA();
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+  useEffect(() => {
+    // Registrar Service Worker
+    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('✅ Service Worker registrado:', registration);
+
+          // Verificar atualizações
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // Nova versão disponível
+                  setShowUpdateModal(true); // Show custom update modal
+                }
+              });
+            }
+          });
+        })
+        .catch((error) => {
+          console.error('❌ Erro ao registrar Service Worker:', error);
+        });
+    }
+
+    // Configurar shortcuts de teclado para PWA
+    const handleKeyDown = (e) => {
+      // Ctrl/Cmd + N para nova tarefa
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        // Abrir modal de nova tarefa
+        setShowTaskModal && setShowTaskModal(true);
+      }
+
+      // Ctrl/Cmd + F para buscar
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        // Focar no campo de busca
+        const searchInput = document.querySelector('input[type="search"]');
+        if (searchInput) searchInput.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Configurar meta viewport para mobile
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=no');
+    }
+
+    // Configurar theme-color dinamicamente
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor) {
+      themeColor.setAttribute('content', '#3B82F6');
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [setShowTaskModal]); // Add setShowTaskModal to dependency array
+
+  const handleUpdateConfirm = () => {
+    window.location.reload();
+  };
+
+  const handleUpdateCancel = () => {
+    setShowUpdateModal(false);
+  };
+
+  return (
+    <>
+      <NetworkStatus isOnline={isOnline} />
+      <InstallButton
+        installPrompt={installPrompt}
+        installApp={installApp}
+        isInstalled={isInstalled}
+      />
+      <UpdateModal
+        show={showUpdateModal}
+        onConfirm={handleUpdateConfirm}
+        onCancel={handleUpdateCancel}
+      />
+    </>
+  );
+};
+
+
+// Componente principal do App - ATUALIZADO COM DIETAS e PWA
 const App = () => {
   const { user, loading: authLoading, login, register, logout } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false); // State for task modal visibility
 
   // Função de login
   const handleLogin = async (email, password) => {
@@ -627,14 +859,15 @@ const App = () => {
     }
   };
 
-  // ✅ RENDERIZAR COMPONENTES COM DIETAS INCLUÍDAS
+  // RENDERIZAR COMPONENTES COM DIETAS INCLUÍDAS
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'dashboard':
         return <Dashboard user={user} />;
       case 'tasks':
-        return <TaskManagement />;
-      case 'diet': // ✅ NOVO CASE PARA DIETAS
+        // Pass setShowTaskModal to TaskManagement if it controls the modal
+        return <TaskManagement showTaskModal={showTaskModal} setShowTaskModal={setShowTaskModal} />;
+      case 'diet': // NOVO CASE PARA DIETAS
         return <DietManagement />;
       case 'finance':
         return <FinanceManagement />;
@@ -660,8 +893,9 @@ const App = () => {
   }
 
   return (
-    <AppContext.Provider value={{ user, currentPage, setCurrentPage }}>
+    <AppContext.Provider value={{ user, currentPage, setCurrentPage, setShowTaskModal }}>
       <div className="min-h-screen bg-gray-50">
+        <PWAFeatures setShowTaskModal={setShowTaskModal} /> {/* Pass setShowTaskModal */}
         <Navigation
           currentPage={currentPage}
           onPageChange={setCurrentPage}
@@ -682,7 +916,7 @@ const App = () => {
           </AnimatePresence>
         </main>
       </div>
-    </AppContext.Provider> 
+    </AppContext.Provider>
   );
 };
 
